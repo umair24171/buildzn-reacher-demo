@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>AI Inbox Demo — Reacher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6f3; --surface:#ffffff; --surface-2:#eef1ee; --surface-3:#f8faf8;
+    --line:#dde3dd; --line-strong:#c8d2c8;
+    --ink:#14201a; --ink-2:#43544a; --muted:#6b7d71;
+    --accent:#0e7a5f; --accent-ink:#0a5c48; --accent-soft:#e2f2ec;
+    --amber-bg:#fff7e0; --amber-line:#e8d48a; --amber-ink:#7a5a00;
+    --red-bg:#fef1f0; --red-line:#f2c1bc; --red:#b42318; --red-ink:#8f1d14;
+    --blue-bg:#eef4ff; --blue-ink:#274b8f;
+    --shadow:0 1px 2px rgba(20,32,26,.06), 0 8px 24px rgba(20,32,26,.06);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#101512; --surface:#171e1a; --surface-2:#1e2822; --surface-3:#1a231e;
+      --line:#2a352e; --line-strong:#37463c;
+      --ink:#e8efe9; --ink-2:#b8c7bb; --muted:#8fa196;
+      --accent:#3ec49b; --accent-ink:#7edbbd; --accent-soft:#17362d;
+      --amber-bg:#2f2a12; --amber-line:#5c5324; --amber-ink:#f0d48a;
+      --red-bg:#331a18; --red-line:#5e2b27; --red:#ff8a7d; --red-ink:#ffb3a8;
+      --blue-bg:#16233d; --blue-ink:#a8c2ff;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent-ink)}
+  button{font-family:inherit;cursor:pointer;min-height:40px}
+  input,textarea,select{font-family:inherit}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+  .wrap{max-width:1440px;margin:0 auto;padding:18px 18px 40px}
+  /* Top bar */
+  .topbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);font-weight:800;margin:0 0 4px}
+  h1{font-size:28px;line-height:1.1;margin:0;letter-spacing:-.02em;font-weight:800}
+  .sub{color:var(--ink-2);max-width:62ch;margin:6px 0 0;font-size:14.5px}
+  .top-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--ink-2)}
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .badge.demo{border-color:var(--amber-line);background:var(--amber-bg);color:var(--amber-ink)}
+  .btn{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+  .btn:hover{border-color:var(--ink-2)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  @media (prefers-color-scheme: dark){ .btn.primary{color:#0b1512} }
+  .btn.primary:hover{filter:brightness(1.07)}
+  .btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+  .btn.ghost{background:transparent}
+  .btn.small{min-height:36px;padding:6px 10px;font-size:12.5px;border-radius:8px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  .safety{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:14px}
+  .safety strong{font-size:13.5px}
+  .safety p{margin:2px 0 0;font-size:13px;color:var(--ink-2)}
+  .safety-icon{width:32px;height:32px;flex:0 0 32px;border-radius:8px;background:var(--accent-soft);display:grid;place-items:center;font-size:16px}
+
+  /* How it works */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px}
+  .step-num{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:800;font-size:13px}
+  .step h3{margin:0;font-size:13.5px}
+  .step p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .kpi .label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .kpi .value{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-top:2px}
+  .kpi .hint{font-size:12px;color:var(--muted);margin-top:2px}
+  .kpi.warn .value{color:var(--red)}
+
+  /* Main grid */
+  .grid{display:grid;grid-template-columns:330px minmax(0,1fr) 350px;gap:14px;align-items:start}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .panel-head{padding:13px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .panel-head h2{margin:0;font-size:14px;font-weight:800;letter-spacing:-.01em}
+  .panel-head .count{font-size:12px;color:var(--muted);font-weight:600}
+  .panel-body{padding:14px}
+
+  /* Inbox */
+  .search{padding:12px 12px 8px}
+  .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-3);color:var(--ink);font-size:13.5px;min-height:40px}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}
+  .chip{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:700;min-height:32px}
+  .chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .inbox-list{display:flex;flex-direction:column;max-height:760px;overflow:auto}
+  .conv{border-top:1px solid var(--line);padding:12px 14px;cursor:pointer;text-align:left;background:transparent;border-left:3px solid transparent;width:100%;color:var(--ink)}
+  .conv:hover{background:var(--surface-3)}
+  .conv.selected{background:var(--accent-soft);border-left-color:var(--accent)}
+  .conv-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .conv-name{font-weight:800;font-size:13.5px}
+  .conv-time{font-size:11px;color:var(--muted);white-space:nowrap}
+  .conv-shop{font-size:12px;color:var(--muted);margin-top:1px}
+  .conv-preview{font-size:12.5px;color:var(--ink-2);margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .conv-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+  .tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 7px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+  .tag.howto{border-color:#bfe3d4;background:var(--accent-soft);color:var(--accent-ink)}
+  .tag.refund,.tag.billing,.tag.bug{border-color:var(--red-line);background:var(--red-bg);color:var(--red-ink)}
+  .tag.sample,.tag.outreach{border-color:#c9d8f5;background:var(--blue-bg);color:var(--blue-ink)}
+  .status-pill{font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:999px}
+  .status-pill.pending{background:var(--amber-bg);color:var(--amber-ink);border:1px solid var(--amber-line)}
+  .status-pill.sent{background:var(--accent-soft);color:var(--accent-ink);border:1px solid #bfe3d4}
+  .status-pill.escalated{background:var(--red-bg);color:var(--red-ink);border:1px solid var(--red-line)}
+  .empty{padding:22px 14px;text-align:center;color:var(--muted);font-size:13px}
+
+  /* Detail */
+  .detail-head{padding:16px 18px 0}
+  .detail-head h2{font-size:19px;margin:0;letter-spacing:-.02em;line-height:1.25}
+  .meta-row{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:12.5px;color:var(--muted)}
+  .msg-card{margin:14px 18px 0;background:var(--surface-3);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .msg-card .from{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .msg-card p{margin:0;font-size:14.5px;color:var(--ink)}
+  .alert{margin:14px 18px 0;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+  .alert.red{background:var(--red-bg);border:1px solid var(--red-line);color:var(--red-ink)}
+  .alert.amber{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink)}
+  .alert strong{font-weight:800}
+  .alert p{margin:2px 0 0}
+  .analysis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 18px 0}
+  .mini{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .mini .k{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .mini .v{font-weight:800;font-size:14px;margin-top:2px}
+  .mini .sub{font-size:12px;color:var(--muted)}
+  .conf-bar{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-top:7px}
+  .conf-fill{height:100%;background:var(--accent);border-radius:999px}
+  .conf-fill.low{background:#d97706}
+  .draft-wrap{margin:14px 18px 0}
+  .draft-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .draft-head h3{margin:0;font-size:14px;font-weight:800}
+  .draft-head .ver{font-size:12px;color:var(--muted)}
+  textarea.draft{width:100%;min-height:178px;margin-top:8px;padding:12px 13px;border-radius:12px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-size:14px;line-height:1.6;resize:vertical}
+  textarea.draft:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .sources{margin-top:10px}
+  .sources .k{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px}
+  .source-list{display:flex;flex-direction:column;gap:6px}
+  .source{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface-3);text-decoration:none;color:var(--ink)}
+  .source:hover{border-color:var(--accent)}
+  .source .ic{flex:0 0 22px;width:22px;height:22px;border-radius:6px;background:var(--accent-soft);display:grid;place-items:center;font-size:12px}
+  .source .t{font-weight:700;font-size:13px;line-height:1.3}
+  .source .d{font-size:12px;color:var(--muted)}
+  .source .arr{margin-left:auto;color:var(--muted)}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;padding:16px 18px 18px}
+  .actions .spacer{flex:1}
+  .esc-panel{margin:0 18px 18px;border:1px dashed var(--red-line);background:var(--red-bg);border-radius:12px;padding:14px;display:none}
+  .esc-panel.open{display:block}
+  .esc-panel h4{margin:0 0 8px;font-size:13.5px;color:var(--red-ink)}
+  .esc-panel label{font-size:12px;font-weight:700;color:var(--red-ink);display:block;margin:10px 0 5px}
+  .esc-panel select,.esc-panel textarea{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--red-line);background:var(--surface);color:var(--ink);font-size:13.5px;min-height:40px}
+  .esc-panel textarea{min-height:64px;resize:vertical}
+
+  /* Right column */
+  .stack{display:flex;flex-direction:column;gap:14px}
+  .rule{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .rule:first-of-type{border-top:none;padding-top:2px}
+  .rule .badge-ic{width:30px;height:30px;flex:0 0 30px;border-radius:8px;display:grid;place-items:center;font-size:14px;background:var(--red-bg);border:1px solid var(--red-line)}
+  .rule h4{margin:0;font-size:13px}
+  .rule p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+  .lib-item{display:flex;gap:8px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);text-decoration:none;color:var(--ink)}
+  .lib-item:first-of-type{border-top:none}
+  .lib-item .t{font-weight:700;font-size:13px}
+  .lib-item .d{font-size:12px;color:var(--muted)}
+  .log-tools{display:flex;gap:6px}
+  .log-list{max-height:520px;overflow:auto;padding:6px 14px 14px}
+  .log-entry{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .log-entry:first-child{border-top:none}
+  .log-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:0 0 9px;background:var(--muted)}
+  .log-dot.ai{background:var(--accent)} .log-dot.approved{background:#15803d} .log-dot.escalated{background:var(--red)} .log-dot.edited{background:#b45309} .log-dot.system{background:#64748b}
+  .log-entry .time{font-size:11px;color:var(--muted)}
+  .log-entry .title{font-size:13px;font-weight:700;line-height:1.35}
+  .log-entry .detail{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .log-filter{width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface-3);color:var(--ink);font-size:13px;margin:10px 14px 0;width:calc(100% - 28px);min-height:38px}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:18px;background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:999px;font-size:13.5px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:92vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer{margin-top:18px;font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+  @media (max-width:1100px){
+    .grid{grid-template-columns:300px minmax(0,1fr)}
+    .stack{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;align-items:start}
+    .kpis{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:720px){
+    .wrap{padding:14px 12px 32px}
+    h1{font-size:23px}
+    .steps{grid-template-columns:1fr}
+    .kpis{grid-template-columns:1fr 1fr}
+    .grid{grid-template-columns:1fr}
+    .inbox-list{max-height:340px}
+    .stack{grid-template-columns:1fr}
+    .analysis{grid-template-columns:1fr}
+    .actions .btn{flex:1 1 auto}
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <p class="eyebrow">Reacher · TikTok Shop Creator Tools</p>
+      <h1>AI Inbox — Draft, Review, Escalate</h1>
+      <p class="sub">A working demo of a draft-only support inbox. The AI reads Reacher's own help pages, writes a reply with its sources attached, and a human decides what happens next. Nothing sends on its own.</p>
+    </div>
+    <div class="top-actions">
+      <span class="badge demo">● DEMO — No live inbox connected</span>
+      <span class="badge"><span class="dot"></span> Draft-only mode</span>
+      <button class="btn" id="simulateBtn" type="button">＋ Simulate new message</button>
+      <button class="btn ghost" id="resetBtn" type="button">Reset demo</button>
+    </div>
+  </div>
+
+  <div class="safety" role="note">
+    <div class="safety-icon" aria-hidden="true">🛡️</div>
+    <div>
+      <strong>Human approval is the send button.</strong>
+      <p>Every draft below needs a person to approve it. Refunds, billing disputes, and bug reports are auto-flagged and held for a lead — they sit in “Held for lead”, not in the send queue, until a human escalates them.</p>
+    </div>
+  </div>
+
+  <div class="steps" aria-label="How it works">
+    <div class="step"><div class="step-num">1</div><div><h3>AI reads the help pages</h3><p>Each draft is built only from Reacher pages linked in the draft — pricing, sample management, tutorials, and guides.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div><h3>You review the draft + sources</h3><p>Check the wording, open the source to verify it, edit in place, or ask for a new version.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div><h3>Approve or escalate</h3><p>Safe questions get sent after approval. Money, billing, and bugs are held for a human lead with full context — and everything is logged.</p></div></div>
+  </div>
+
+  <div class="kpis" aria-label="Queue summary">
+    <div class="kpi"><div class="label">Needs review</div><div class="value" id="kpiPending">—</div><div class="hint">Drafts waiting on a human</div></div>
+    <div class="kpi"><div class="label">Approved &amp; sent</div><div class="value" id="kpiSent">—</div><div class="hint">In this demo session</div></div>
+    <div class="kpi warn"><div class="label">Held / Escalated</div><div class="value" id="kpiEsc">—</div><div class="hint">Auto-flagged: refunds · billing · bugs</div></div>
+    <div class="kpi"><div class="label">Avg. AI confidence</div><div class="value" id="kpiConf">—</div><div class="hint">On pending drafts</div></div>
+    <div class="kpi"><div class="label">Est. time saved</div><div class="value" id="kpiTime">—</div><div class="hint">~6 min drafting per reply</div></div>
+  </div>
+
+  <div class="grid">
+    <!-- INBOX -->
+    <section class="panel" aria-label="Inbox">
+      <div class="panel-head"><h2>Inbox</h2><span class="count" id="inboxCount"></span></div>
+      <div class="search"><input id="searchInput" type="search" placeholder="Search name, shop, or keyword…" aria-label="Search inbox" /></div>
+      <div class="filters" role="group" aria-label="Filter inbox">
+        <button class="chip active" data-filter="all" type="button">All</button>
+        <button class="chip" data-filter="pending" type="button">Needs review</button>
+        <button class="chip" data-filter="escalate" type="button">Held for lead</button>
+        <button class="chip" data-filter="sent" type="button">Sent</button>
+        <button class="chip" data-filter="escalated" type="button">Escalated</button>
+      </div>
+      <div class="inbox-list" id="inboxList"></div>
+    </section>
+
+    <!-- DETAIL -->
+    <main class="panel" aria-label="Conversation detail" id="detailPanel"></main>
+
+    <!-- RIGHT -->
+    <div class="stack">
+      <section class="panel" aria-label="Escalation rules">
+        <div class="panel-head"><h2>Escalation rules</h2><span class="count">Always on</span></div>
+        <div class="panel-body">
+          <div class="rule"><div class="badge-ic" aria-hidden="true">↩️</div><div><h4>Refund requests</h4><p>Any ask for money back, trial refunds, or chargebacks goes to Billing Lead. AI drafts context only — it never promises a refund.</p></div></div>
+          <div class="rule"><div class="badge-ic" aria-hidden="true">🧾</div><div><h4>Billing disputes</h4><p>Wrong plan charged, double charges, or invoice questions go to Billing Lead with plan and amount attached.</p></div></div>
+          <div class="rule"><div class="badge-ic" aria-hidden="true">🐞</div><div><h4>Bug reports</h4><p>Stuck automations, failed sends, and broken pages go to Support Engineering with steps to reproduce from the thread.</p></div></div>
+          <div class="rule"><div class="badge-ic" aria-hidden="true">😠</div><div><h4>Angry or at-risk accounts</h4><p>Threats to cancel or churn, or repeated failures, escalate even if the question itself looks simple.</p></div></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Help sources used">
+        <div class="panel-head"><h2>Sources the AI can use</h2><span class="count">6 pages</span></div>
+        <div class="panel-body" id="sourceLibrary"></div>
+      </section>
+
+      <section class="panel" aria-label="Draft log">
+        <div class="panel-head">
+          <h2>Draft log</h2>
+          <div class="log-tools">
+            <button class="btn small" id="downloadLogBtn" type="button">Download log</button>
+          </div>
+        </div>
+        <select class="log-filter" id="logFilter" aria-label="Filter log">
+          <option value="all">All activity</option>
+          <option value="ai">AI drafts</option>
+          <option value="approved">Approvals</option>
+          <option value="escalated">Escalations</option>
+          <option value="edited">Edits &amp; versions</option>
+        </select>
+        <div class="log-list" id="logList"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <span>Demo data: simulated conversations from fictional Reacher customers. Draft answers are based on the public Reacher pages linked in each draft.</span>
+    <span class="mono">Reacher AI Inbox · Demo build · 13 Nov 2026</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+var SOURCES = {
+  pricing: { title:"Pricing — TikTok Shop Affiliate Software", desc:"Starter $199/mo · Pro $599/mo · Enterprise custom · Daily outreach: Starter 1,000, Pro 10,000, Enterprise Max", url:"https://www.reacherapp.com/pricing" },
+  features: { title:"Platform & Features", desc:"Creator discovery, five outreach channels, CRM stages, and GMV analytics in one view", url:"https://www.reacherapp.com/features" },
+  samples: { title:"Sample Management for Creator Outreach", desc:"One queue from pending to posted, quotas, Ideal Creator Profiles, auto-approval rules", url:"https://www.reacherapp.com/features/sample-management" },
+  creatorCenter: { title:"TikTok Shop Creator Center — Complete Guide", desc:"Eligibility (1,000+ followers, 18+), sign-up, login, and troubleshooting", url:"https://www.reacherapp.com/blog/tiktok-shop-creator-center" },
+  tutorials: { title:"Reacher Portal — Tab-by-Tab Tutorials", desc:"AI Creator Search, automations, Evergreen mode, sample auto-approval, blacklist", url:"https://portal.reacherapp.com/tutorials/" },
+  tcCard: { title:"Feature Update #3 — Target Collab Card", desc:"Target Collab + Message + TC Card automation, and how to set the DM message", url:"https://reacherapp.com/blogs/blog/reacher-feature-update-3-target-collab-card" }
+};
+
+var INITIAL_CONVS = [
+  {
+    id:"C-1041", name:"Maya Chen", shop:"GlowLab Beauty", plan:"Starter", time:"09:12", channel:"Email",
+    subject:"What's my daily outreach limit on Starter?",
+    message:"Hi! We just started on Starter and I want to plan this week's creator outreach. How many creators can we reach out to per day, and does that change if we move to Pro later?",
+    category:"How-to", categoryClass:"howto", intent:"Plan limits question", confidence:96, sentiment:"Neutral", priority:"Normal",
+    escalate:false,
+    draft:"Hi Maya — thanks for asking before you plan the week.\n\nOn Starter, Reacher allows 1,000 daily creator outreach actions. If you move to Pro, that rises to 10,000 per day, and Enterprise is listed as Max.\n\nFor this week, I'd suggest pacing your Starter outreach across the week rather than using the full 1,000 on day one, so your follow-ups land in creators' time zones. The pricing page linked below has the full plan comparison if you want to check automations and analytics alongside the limits.\n\nWant me to look at your current automation setup before you scale it?",
+    altDraft:"Hi Maya — quick answer: Starter includes 1,000 daily creator outreach actions. Pro includes 10,000 per day, and Enterprise is Max.\n\nThe full comparison, including concurrent automations and support level, is on the pricing page below. Happy to help you map this week's outreach to the Starter limit if useful.",
+    sources:["pricing"]
+  },
+  {
+    id:"C-1042", name:"Jordan Ellis", shop:"UrbanFit Apparel", plan:"Pro", time:"09:27", channel:"Chat",
+    subject:"How do we auto-approve only likely-to-post creators?",
+    message:"We're drowning in sample requests. Is there a way to auto-approve creators who are actually likely to post, and hold the rest for manual review? We use the Sample Requests queue today.",
+    category:"Samples", categoryClass:"sample", intent:"Sample auto-approval setup", confidence:93, sentiment:"Neutral", priority:"Normal",
+    escalate:false,
+    draft:"Hi Jordan — yes, that's exactly what the Sample Requests queue is built for.\n\nYou can set monthly quotas per product and save Ideal Creator Profiles, then auto-approve or deny by rule using minimum GMV, engagement, followers, and post rate. Reacher also surfaces a creator's full history with you (requests, approvals, posts, and GMV) plus expiring-soon flags before you decide.\n\nA good starting setup: auto-approve creators who match your Ideal Creator Profile and post-rate threshold, and keep everyone else in manual review for the first two weeks while you check the completion rate.\n\nThe walkthroughs linked below cover the queue and the auto-approval automation step by step.",
+    altDraft:"Hi Jordan — you can do this in CRM → Sample Requests with a New Auto-Approval automation.\n\nSet your min GMV, engagement, followers, and post-rate rules, or always approve from saved lists. Creators who don't match stay in the manual queue, with their history and expiring-soon flags visible. The two guides below show the full setup.",
+    sources:["samples","tutorials"]
+  },
+  {
+    id:"C-1043", name:"Sofia Ramirez", shop:"Casa Living", plan:"Starter → charged Pro", time:"09:41", channel:"Email",
+    subject:"We were charged $599 but we're on Starter ($199)",
+    message:"Hi, our card was charged $599 this morning but our plan is Starter at $199/month. This is the second billing issue we've had. Please fix this today, we did not upgrade to Pro.",
+    category:"Billing dispute", categoryClass:"billing", intent:"Billing dispute — wrong plan charged", confidence:71, sentiment:"Frustrated", priority:"High",
+    escalate:true, escReason:"Billing dispute",
+    draft:"[Draft for lead review — do not send as-is]\n\nHi Sofia — I'm sorry about this charge. I can see the concern: a $599 charge against a Starter plan listed at $199/month.\n\nI've flagged this for our billing lead with your plan and the amount attached so they can check the charge directly. [Lead to confirm: plan history, whether an upgrade or billing-period change was recorded, and next step before replying.]",
+    altDraft:"[Draft for lead review — do not send as-is]\n\nHi Sofia — thank you for flagging this, and sorry for the worry. A $599 charge does not match the $199/month Starter price on our pricing page. I've escalated this to our billing lead with the details you provided. [Lead to verify and complete.]",
+    sources:["pricing"]
+  },
+  {
+    id:"C-1044", name:"Liam O'Connor", shop:"TechGear Co", plan:"Pro (trial)", time:"10:03", channel:"Chat",
+    subject:"Refund request — trial didn't work for us",
+    message:"We tried Reacher on a trial and it doesn't fit our shop. I want a full refund for what we paid. Please process it, don't just send me help articles.",
+    category:"Refund", categoryClass:"refund", intent:"Refund request", confidence:64, sentiment:"Frustrated", priority:"High",
+    escalate:true, escReason:"Refund request",
+    draft:"[Draft for lead review — do not send as-is]\n\nHi Liam — I'm sorry Reacher wasn't the right fit for your shop, and I understand you want a clear answer on a refund rather than more help articles.\n\nRefund requests are handled by our billing lead, so I've passed this over with your trial context attached. [Lead to confirm: amount paid, trial terms that apply, and the decision before any reply is sent.]",
+    altDraft:"[Draft for lead review — do not send as-is]\n\nHi Liam — thank you for being direct. I can't confirm a refund in this reply, refund decisions sit with our billing lead. I've escalated your request with your account context. [Lead to complete.]",
+    sources:["pricing"]
+  },
+  {
+    id:"C-1045", name:"Priya Patel", shop:"Bloom Skincare", plan:"Pro", time:"10:18", channel:"Email",
+    subject:"Bug: Target Collab cards stopped sending",
+    message:"Since yesterday our Target Collab + TC Card automation runs, it shows creators invited, but no DM card arrives. We tested with 3 creators and none got the card. This is blocking our launch today.",
+    category:"Bug report", categoryClass:"bug", intent:"Bug — TC Card not delivered", confidence:58, sentiment:"Urgent", priority:"High",
+    escalate:true, escReason:"Bug report",
+    draft:"[Draft for engineering review — do not send as-is]\n\nHi Priya — thank you for the clear report, and I'm sorry this is blocking your launch.\n\nSo I have it right: the automation runs and shows creators as invited, but the TC Card DM does not arrive (tested with 3 creators since yesterday). I've logged this for our support engineering team with those steps. [Engineering to confirm: known issue status, workaround if any, and what logs are needed from Priya.]",
+    altDraft:"[Draft for engineering review — do not send as-is]\n\nHi Priya — logging this as a bug now: Target Collab + TC Card automation completes, invites show as sent, but no card DM is delivered. I've passed your 3-creator test to engineering. [Engineering to complete.]",
+    sources:["tcCard","tutorials"]
+  },
+  {
+    id:"C-1046", name:"Ben Carter", shop:"NorthPeak Outdoors", plan:"Pro", time:"10:36", channel:"Chat",
+    subject:"Creator with 800 followers can't join Creator Center",
+    message:"One of our best creators has 800 followers and keeps getting rejected from the TikTok Shop Creator Center. Is there a way around the follower requirement, or what should we tell her?",
+    category:"How-to", categoryClass:"howto", intent:"Creator eligibility question", confidence:94, sentiment:"Neutral", priority:"Normal",
+    escalate:false,
+    draft:"Hi Ben — this one has a clear answer in Reacher's Creator Center guide.\n\nTo join the TikTok Shop Creator Center, a creator needs at least 1,000 followers, must be 18 or older, and needs a creator account (not a personal or business account). There's no workaround listed for the follower threshold, so the honest message to your creator is that she'll need to reach 1,000 followers first.\n\nOnce she does, the guide linked below walks through the desktop sign-up at the creator portal and the common login errors. Happy to help you draft a kind note to her if that helps keep the relationship warm.",
+    altDraft:"Hi Ben — per the Creator Center guide, eligibility is 1,000+ followers, age 18+, and a creator account. At 800 followers she won't be accepted yet, and the guide doesn't list an exception path.\n\nThe full sign-up and troubleshooting steps are linked below for when she crosses 1,000.",
+    sources:["creatorCenter"]
+  },
+  {
+    id:"C-1047", name:"Alicia Gomez", shop:"PetJoy", plan:"Starter", time:"11:02", channel:"Email",
+    subject:"How do I send the Target Collab as a DM card?",
+    message:"Our creators keep missing Target Collab invites because they go to a separate inbox. I heard Reacher can send the invite as a card inside the DM with a message. How do we set that up?",
+    category:"Outreach", categoryClass:"outreach", intent:"TC Card automation setup", confidence:92, sentiment:"Positive", priority:"Normal",
+    escalate:false,
+    draft:"Hi Alicia — you're remembering right, and it's a common problem: Target Collab invites land in a separate inbox and get missed.\n\nIn Reacher, create a new automation and choose the Target Collab + TC Card type. You'll run the usual Target Collaboration setup, and on the second page there's an extra field for the message that goes into the creator's DM alongside the card.\n\nThe portal tutorials also walk through Target Collab + Message setup (audience, validity of 3–6 months, commission, and follow-ups at +2 and +3 days). Both links are below — the feature update explains the card itself, and the tutorials cover the full flow.",
+    altDraft:"Hi Alicia — use the Target Collab + TC Card automation type when you create a new automation.\n\nIt does the standard Target Collaboration invite, then sends that invite as a TC Card in the creator's DM with a custom message you set on page two of the setup. Full steps are in the two links below.",
+    sources:["tcCard","tutorials"]
+  },
+  {
+    id:"C-1048", name:"David Kim", shop:"SoundWave Audio", plan:"Enterprise", time:"11:20", channel:"Chat",
+    subject:"Can we see shop, affiliate, and video GMV together?",
+    message:"Our team exports three reports every Monday to reconcile shop GMV, affiliate GMV, and video GMV. Does Reacher have one view for all of it, plus the sample funnel?",
+    category:"How-to", categoryClass:"howto", intent:"Analytics / reporting question", confidence:90, sentiment:"Neutral", priority:"Normal",
+    escalate:false,
+    draft:"Hi David — yes, that's one of the views on the platform page.\n\nReacher brings shop, affiliate, and video GMV (plus EMV) into one view, alongside health, the sample funnel, cohort value and LTV, and profit — including a profit calculator and value per automation — specifically so teams don't need three exports.\n\nIf your Monday report has specific fields you reconcile by hand, send me the list and I can confirm each one against that view before you change the workflow.",
+    altDraft:"Hi David — Reacher's analytics puts shop, affiliate, and video GMV in one view, with the sample funnel, cohort LTV, health, and profit alongside it.\n\nDetails are on the platform page below. If you share your current Monday fields, I can map them to the view for you.",
+    sources:["features"]
+  }
+];
+
+var EXTRA_CONVS = [
+  {
+    id:"C-1049", name:"Emma Wilson", shop:"Willow Home", plan:"Starter", time:"Now", channel:"Chat",
+    subject:"How does Evergreen mode work for outreach?",
+    message:"I set up an outreach automation but new creators who match my filters don't get added automatically. Did I miss a setting for always-on outreach?",
+    category:"Outreach", categoryClass:"outreach", intent:"Evergreen mode setup", confidence:91, sentiment:"Neutral", priority:"Normal",
+    escalate:false,
+    draft:"Hi Emma — you likely just need Evergreen mode switched on.\n\nCreate (or open) your outreach automation as usual, then turn on Evergreen mode — it will show as 'Evergreen' in the Outreach tab. It pauses when no new creators match your filters and resumes the moment a new creator hits them.\n\nThe tutorial section linked below covers Evergreen step by step, alongside the blacklist setting (blacklisted creators are excluded from both Outreach and Re-engage).",
+    altDraft:"Hi Emma — turn on Evergreen mode on your outreach automation. It shows as 'Evergreen' in the Outreach tab, pauses when nothing new matches, and resumes when a new creator matches your filters. Full steps are in the tutorials below.",
+    sources:["tutorials"]
+  },
+  {
+    id:"C-1050", name:"Noah Brooks", shop:"Brooks Fitness", plan:"Pro", time:"Now", channel:"Email",
+    subject:"Charged twice this month — need this fixed",
+    message:"We have two identical Pro charges on our statement this month. I need one of them reversed. Please don't close this until billing confirms.",
+    category:"Billing dispute", categoryClass:"billing", intent:"Billing dispute — duplicate charge", confidence:68, sentiment:"Frustrated", priority:"High",
+    escalate:true, escReason:"Billing dispute",
+    draft:"[Draft for lead review — do not send as-is]\n\nHi Noah — I'm sorry, two identical Pro charges in one month needs a billing check, not a help article.\n\nI've flagged this for our billing lead with your duplicate-charge details attached, and noted that you want confirmation before this is closed. [Lead to verify both charges and confirm the reversal step.]",
+    altDraft:"[Draft for lead review — do not send as-is]\n\nHi Noah — flagging this to our billing lead now: duplicate Pro charge, one to be reversed, confirmation requested before closing. [Lead to complete.]",
+    sources:["pricing"]
+  }
+];
+
+var state = {
+  convs: JSON.parse(JSON.stringify(INITIAL_CONVS)),
+  extraIdx: 0,
+  selectedId: "C-1041",
+  filter: "all",
+  search: "",
+  logFilter: "all",
+  log: []
+};
+
+function nowTime(){
+  try { return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); } catch(e){ return "Now"; }
+}
+function addLog(type, title, detail){
+  state.log.unshift({ type:type, time: nowTime(), title:title, detail:detail });
+  renderLog();
+}
+function seedLog(){
+  state.log = [
+    { type:"ai", time:"09:12", title:"AI drafted reply — Maya Chen (GlowLab Beauty)", detail:"Intent: plan limits · Confidence 96% · Source: Pricing page" },
+    { type:"ai", time:"09:41", title:"AI held for lead — Sofia Ramirez (Casa Living)", detail:"Billing dispute detected. Status: Held for lead (Billing Lead). Not in the Needs review send queue." },
+    { type:"ai", time:"10:18", title:"AI held for lead — Priya Patel (Bloom Skincare)", detail:"Bug report detected. Status: Held for lead (Support Engineering). Not in the Needs review send queue." },
+    { type:"system", time:"10:30", title:"Demo queue loaded", detail:"8 simulated conversations. Draft-only mode on. No live inbox connected." }
+  ];
+}
+
+function getConv(id){ return state.convs.find(function(c){return c.id===id;}); }
+function statusOf(c){ return c.status || (c.escalate ? "held" : "pending"); }
+
+function filteredConvs(){
+  return state.convs.filter(function(c){
+    var st = statusOf(c);
+    if(state.filter==="pending" && st!=="pending") return false;
+    if(state.filter==="escalate" && st!=="held") return false;
+    if(state.filter==="sent" && st!=="sent") return false;
+    if(state.filter==="escalated" && st!=="escalated") return false;
+    if(state.search){
+      var q = state.search.toLowerCase();
+      var hay = (c.name+" "+c.shop+" "+c.subject+" "+c.message+" "+c.category).toLowerCase();
+      if(hay.indexOf(q)===-1) return false;
+    }
+    return true;
+  });
+}
+
+function renderInbox(){
+  var list = document.getElementById("inboxList");
+  var items = filteredConvs();
+  document.getElementById("inboxCount").textContent = items.length + " shown · " + state.convs.length + " total";
+  if(!items.length){ list.innerHTML = '<div class="empty">No conversations match this filter.<br>Try “All” or clear the search.</div>'; return; }
+  list.innerHTML = items.map(function(c){
+    var st = statusOf(c);
+    var pill = st==="sent" ? '<span class="status-pill sent">Sent</span>' : st==="escalated" ? '<span class="status-pill escalated">Escalated</span>' : st==="held" ? '<span class="status-pill escalated">Held for lead</span>' : '<span class="status-pill pending">Needs review</span>';
+    return '<button type="button" class="conv'+(c.id===state.selectedId?' selected':'')+'" data-id="'+c.id+'">'
+      + '<span class="conv-top"><span class="conv-name">'+escapeHtml(c.name)+'</span><span class="conv-time">'+escapeHtml(c.time)+'</span></span>'
+      + '<span class="conv-shop" style="display:block">'+escapeHtml(c.shop)+' · '+escapeHtml(c.plan)+' · '+escapeHtml(c.channel)+'</span>'
+      + '<span class="conv-preview" style="display:block">'+escapeHtml(c.subject)+'</span>'
+      + '<span class="conv-tags"><span class="tag '+c.categoryClass+'">'+escapeHtml(c.category)+'</span>'+pill+(st==="held"?'<span class="tag refund">Auto-flagged</span>':'')+'</span>'
+      + '</button>';
+  }).join("");
+  Array.prototype.forEach.call(list.querySelectorAll(".conv"), function(el){
+    el.addEventListener("click", function(){ state.selectedId = el.getAttribute("data-id"); renderAll(false); });
+  });
+}
+
+function escapeHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function renderDetail(){
+  var panel = document.getElementById("detailPanel");
+  var c = getConv(state.selectedId);
+  if(!c){ panel.innerHTML = '<div class="empty" style="padding:40px">Select a conversation from the inbox.</div>'; return; }
+  var st = statusOf(c);
+  var isDone = (st==="sent" || st==="escalated");
+  var sourcesHtml = c.sources.map(function(key){
+    var s = SOURCES[key];
+    return '<a class="source" href="'+s.url+'" target="_blank" rel="noopener noreferrer"><span class="ic">📄</span><span><span class="t">'+escapeHtml(s.title)+'</span><br><span class="d">'+escapeHtml(s.desc)+'</span><br><span class="d mono">'+escapeHtml(s.url)+'</span></span><span class="arr">↗</span></a>';
+  }).join("");
+
+  var alertHtml = "";
+  if(c.escalate && !isDone){
+    alertHtml = '<div class="alert red"><span aria-hidden="true">⛔</span><div><strong>Held for lead: '+escapeHtml(c.escReason)+'.</strong><p>This conversation is held out of the send queue. The draft below is context for a human lead only — the AI will not answer money, billing, or bug cases directly. Use “Escalate to lead” below to hand it over, with a note.</p></div></div>';
+  } else if(st==="sent"){
+    alertHtml = '<div class="alert amber"><span aria-hidden="true">✓</span><div><strong>Approved and sent in this demo.</strong><p>The send, the final wording, and the sources were written to the draft log.</p></div></div>';
+  } else if(st==="escalated"){
+    alertHtml = '<div class="alert red"><span aria-hidden="true">↗</span><div><strong>Escalated to a human lead.</strong><p>Reason and handover note are in the draft log. The customer reply is now owned by the lead, not the AI.</p></div></div>';
+  }
+
+  var confClass = c.confidence < 75 ? "conf-fill low" : "conf-fill";
+  var currentDraft = c.currentDraft || c.draft;
+  var version = c.version || 1;
+
+  panel.innerHTML =
+    '<div class="detail-head"><h2>'+escapeHtml(c.subject)+'</h2>'
+    + '<div class="meta-row"><span><strong>'+escapeHtml(c.name)+'</strong> · '+escapeHtml(c.shop)+'</span><span>Plan: '+escapeHtml(c.plan)+'</span><span class="mono">'+escapeHtml(c.id)+'</span><span>'+escapeHtml(c.channel)+' · '+escapeHtml(c.time)+'</span></div></div>'
+    + '<div class="msg-card"><div class="from">Customer message</div><p>'+escapeHtml(c.message)+'</p></div>'
+    + alertHtml
+    + '<div class="analysis">'
+    +   '<div class="mini"><div class="k">AI intent</div><div class="v">'+escapeHtml(c.intent)+'</div><div class="sub">Category: '+escapeHtml(c.category)+'</div></div>'
+    +   '<div class="mini"><div class="k">Confidence</div><div class="v">'+c.confidence+'%</div><div class="conf-bar"><div class="'+confClass+'" style="width:'+c.confidence+'%"></div></div></div>'
+    +   '<div class="mini"><div class="k">Sentiment · Priority</div><div class="v">'+escapeHtml(c.sentiment)+'</div><div class="sub">Priority: '+escapeHtml(c.priority)+(c.escalate?' · Risk flag: '+escapeHtml(c.escReason):' · No risk flags')+'</div></div>'
+    + '</div>'
+    + '<div class="draft-wrap"><div class="draft-head"><h3>AI draft reply</h3><span class="ver">Version '+version+' · <span id="charCount"></span> characters · Draft only, not sent</span></div>'
+    + '<textarea class="draft" id="draftText" '+(isDone?'disabled':'')+' aria-label="AI draft reply, editable">'+escapeHtml(currentDraft)+'</textarea>'
+    + '<div class="sources"><div class="k">Grounded in — open to verify</div><div class="source-list">'+sourcesHtml+'</div></div></div>'
+    + '<div class="esc-panel" id="escPanel"><h4>Escalate to a human lead</h4>'
+    + '<label for="escReason">Reason</label><select id="escReason"><option>Refund request</option><option>Billing dispute</option><option>Bug report</option><option>Angry / at-risk account</option><option>Policy or legal risk</option><option>Other</option></select>'
+    + '<label for="escNote">Handover note for the lead</label><textarea id="escNote" placeholder="What should the lead know? Amounts, plan, what you already checked…"></textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn danger" id="confirmEscBtn" type="button">Confirm escalation</button><button class="btn" id="cancelEscBtn" type="button">Cancel</button></div></div>'
+    + '<div class="actions">'
+    +   (c.escalate && !isDone
+          ? '<button class="btn danger" id="escalateBtn" type="button">↗ Escalate to lead</button><button class="btn" id="editBtn" type="button">Edit draft</button><button class="btn" id="regenBtn" type="button">↻ New version</button>'
+          : '<button class="btn primary" id="approveBtn" type="button" '+(isDone?'disabled':'')+'>✓ Approve &amp; send</button><button class="btn" id="editBtn" type="button" '+(isDone?'disabled':'')+'>Edit draft</button><button class="btn" id="regenBtn" type="button" '+(isDone?'disabled':'')+'>↻ New version</button><button class="btn" id="escalateBtn" type="button" '+(isDone?'disabled':'')+'>↗ Escalate</button>')
+    +   '<span class="spacer"></span><button class="btn ghost" id="discardBtn" type="button" '+(isDone?'disabled':'')+'>Discard draft</button></div>';
+
+  // wire events
+  var ta = document.getElementById("draftText");
+  var cc = document.getElementById("charCount");
+  function updCount(){ if(cc) cc.textContent = ta.value.length; }
+  updCount();
+  ta.addEventListener("input", function(){
+    updCount();
+    if(!c._editedLogged && ta.value !== currentDraft){
+      c._editedLogged = true;
+      c.currentDraft = ta.value;
+      addLog("edited", "Draft edited — " + c.name + " (" + c.shop + ")", "Human edited version " + (c.version||1) + " before deciding. Edit recorded in log.");
+    } else { c.currentDraft = ta.value; }
+  });
+  var approveBtn = document.getElementById("approveBtn");
+  if(approveBtn) approveBtn.addEventListener("click", function(){
+    c.status = "sent"; c.currentDraft = ta.value;
+    addLog("approved", "Approved & sent — " + c.name + " (" + c.shop + ")", c.subject + " · Final draft (" + ta.value.length + " chars) sent in demo. Sources: " + c.sources.map(function(k){return SOURCES[k].title;}).join("; "));
+    showToast("Approved and sent (demo) — logged.");
+    moveToNextPending();
+    renderAll(false);
+  });
+  var escBtn = document.getElementById("escalateBtn");
+  if(escBtn) escBtn.addEventListener("click", function(){
+    var p = document.getElementById("escPanel"); p.classList.add("open");
+    var sel = document.getElementById("escReason");
+    if(c.escReason) sel.value = c.escReason;
+    var note = document.getElementById("escNote");
+    note.value = c.escalate ? ("Auto-flagged: " + c.escReason + ". Customer: " + c.message) : "";
+    note.focus();
+  });
+  var cancelEsc = document.getElementById("cancelEscBtn");
+  if(cancelEsc) cancelEsc.addEventListener("click", function(){ document.getElementById("escPanel").classList.remove("open"); });
+  var confirmEsc = document.getElementById("confirmEscBtn");
+  if(confirmEsc) confirmEsc.addEventListener("click", function(){
+    var reason = document.getElementById("escReason").value;
+    var note = document.getElementById("escNote").value.trim();
+    c.status = "escalated"; c.currentDraft = ta.value;
+    addLog("escalated", "Escalated — " + c.name + " (" + c.shop + ")", "Reason: " + reason + (note ? " · Note: " + note : " · No note added") );
+    showToast("Escalated to lead — handover logged.");
+    moveToNextPending();
+    renderAll(false);
+  });
+  var editBtn = document.getElementById("editBtn");
+  if(editBtn) editBtn.addEventListener("click", function(){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); showToast("Editing draft — your changes are kept and logged."); });
+  var regenBtn = document.getElementById("regenBtn");
+  if(regenBtn) regenBtn.addEventListener("click", function(){
+    var useAlt = !c._usingAlt;
+    c._usingAlt = useAlt;
+    c.version = (c.version||1) + 1;
+    c.currentDraft = useAlt ? c.altDraft : c.draft;
+    c._editedLogged = false;
+    ta.value = c.currentDraft; updCount();
+    addLog("edited", "New draft version " + c.version + " — " + c.name + " (" + c.shop + ")", "AI regenerated from the same sources. Previous version replaced in the editor; both actions are in this log.");
+    showToast("New version generated from the same sources.");
+  });
+  var discardBtn = document.getElementById("discardBtn");
+  if(discardBtn) discardBtn.addEventListener("click", function(){
+    c.status = "escalated"; // discarded drafts route to human in this demo model
+    addLog("escalated", "Draft discarded, routed to human — " + c.name + " (" + c.shop + ")", "Reviewer discarded the AI draft for: " + c.subject + ". Conversation assigned to a human without an AI reply.");
+    showToast("Draft discarded — conversation routed to a human.");
+    moveToNextPending(); renderAll(false);
+  });
+}
+
+function moveToNextPending(){
+  var next = state.convs.find(function(x){ return statusOf(x)==="pending"; }) || state.convs.find(function(x){ return statusOf(x)==="held"; });
+  if(next) state.selectedId = next.id;
+}
+
+function renderKpis(){
+  var pending = state.convs.filter(function(c){ return statusOf(c)==="pending"; }).length;
+  var sent = state.convs.filter(function(c){ return statusOf(c)==="sent"; }).length;
+  var esc = state.convs.filter(function(c){ var s=statusOf(c); return s==="held"||s==="escalated"; }).length;
+  var pendingConvs = state.convs.filter(function(c){ var s=statusOf(c); return s==="pending"||s==="held"; });
+  var avg = pendingConvs.length ? Math.round(pendingConvs.reduce(function(a,c){return a+c.confidence;},0)/pendingConvs.length) : 0;
+  document.getElementById("kpiPending").textContent = pending;
+  document.getElementById("kpiSent").textContent = sent;
+  document.getElementById("kpiEsc").textContent = esc;
+  document.getElementById("kpiConf").textContent = pendingConvs.length ? (avg + "%") : "—";
+  document.getElementById("kpiTime").textContent = ((sent + state.convs.length - pending - esc) * 0 + (state.convs.length) * 6) + " min";
+  // time saved = 6 min per draft generated (all convs have drafts) — keep honest label
+  document.getElementById("kpiTime").textContent = (state.convs.length * 6) + " min";
+}
+
+function renderLog(){
+  var el = document.getElementById("logList");
+  var items = state.log.filter(function(e){ return state.logFilter==="all" || e.type===state.logFilter; });
+  if(!items.length){ el.innerHTML = '<div class="empty">No log entries for this filter yet.</div>'; return; }
+  el.innerHTML = items.map(function(e){
+    return '<div class="log-entry"><span class="log-dot '+e.type+'"></span><div><div class="time mono">'+escapeHtml(e.time)+' · '+labelForType(e.type)+'</div><div class="title">'+escapeHtml(e.title)+'</div><div class="detail">'+escapeHtml(e.detail)+'</div></div></div>';
+  }).join("");
+}
+function labelForType(t){ return t==="ai"?"AI draft":t==="approved"?"Approved":t==="escalated"?"Escalated":t==="edited"?"Edited / version":"System"; }
+
+function renderSourceLibrary(){
+  var el = document.getElementById("sourceLibrary");
+  el.innerHTML = Object.keys(SOURCES).map(function(k){
+    var s = SOURCES[k];
+    return '<a class="lib-item" href="'+s.url+'" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">📄</span><span><span class="t">'+escapeHtml(s.title)+'</span><br><span class="d">'+escapeHtml(s.desc)+'</span></span><span style="margin-left:auto;color:var(--muted)">↗</span></a>';
+  }).join("");
+}
+
+function renderAll(reseed){
+  renderInbox(); renderDetail(); renderKpis(); renderLog();
+}
+
+var toastTimer;
+function showToast(msg){
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 3200);
+}
+
+// Controls
+document.querySelectorAll(".chip").forEach(function(ch){
+  ch.addEventListener("click", function(){
+    document.querySelectorAll(".chip").forEach(function(x){x.classList.remove("active");});
+    ch.classList.add("active");
+    state.filter = ch.getAttribute("data-filter");
+    renderInbox();
+  });
+});
+document.getElementById("searchInput").addEventListener("input", function(e){ state.search = e.target.value; renderInbox(); });
+document.getElementById("logFilter").addEventListener("change", function(e){ state.logFilter = e.target.value; renderLog(); });
+document.getElementById("simulateBtn").addEventListener("click", function(){
+  if(state.extraIdx >= EXTRA_CONVS.length){ showToast("No more simulated messages in this demo set — reset to replay."); return; }
+  var nc = JSON.parse(JSON.stringify(EXTRA_CONVS[state.extraIdx])); state.extraIdx++;
+  nc.time = nowTime();
+  state.convs.unshift(nc);
+  state.selectedId = nc.id;
+  addLog("ai", "New message + AI draft — " + nc.name + " (" + nc.shop + ")", "Intent: " + nc.intent + " · Confidence " + nc.confidence + "%" + (nc.escalate ? " · Auto-flagged: " + nc.escReason : " · No risk flags"));
+  showToast("New message arrived — AI draft ready for review.");
+  renderAll(false);
+});
+document.getElementById("resetBtn").addEventListener("click", function(){
+  state.convs = JSON.parse(JSON.stringify(INITIAL_CONVS));
+  state.extraIdx = 0; state.selectedId = "C-1041"; state.filter="all"; state.search="";
+  document.getElementById("searchInput").value = "";
+  document.querySelectorAll(".chip").forEach(function(x){ x.classList.toggle("active", x.getAttribute("data-filter")==="all"); });
+  seedLog(); renderAll(false);
+  showToast("Demo reset — 8 conversations restored.");
+});
+document.getElementById("downloadLogBtn").addEventListener("click", function(){
+  var lines = ["Reacher AI Inbox — Draft Log (demo)", "Exported: " + new Date().toLocaleString(), ""];
+  state.log.slice().reverse().forEach(function(e){ lines.push("[" + e.time + "] " + labelForType(e.type).toUpperCase() + " — " + e.title); lines.push("    " + e.detail); });
+  lines.push("", "Note: Demo log. Conversations are simulated; no real customer data or live inbox is involved.");
+  var blob = new Blob([lines.join("\n")], {type:"text/plain"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a"); a.href = url; a.download = "reacher-ai-inbox-draft-log.txt"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 500);
+  showToast("Draft log downloaded.");
+});
+
+// Init
+seedLog();
+renderSourceLibrary();
+renderAll(true);
+</script>
+</body>
+</html>
